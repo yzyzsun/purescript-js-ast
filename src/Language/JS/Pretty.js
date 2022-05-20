@@ -1,4 +1,4 @@
 
-exports.string = function(s) {
+export function string(s) {
   return JSON.stringify(s);
 };
