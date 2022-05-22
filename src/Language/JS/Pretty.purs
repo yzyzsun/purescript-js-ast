@@ -126,6 +126,7 @@ literals = defer $ \_ → mkPattern' match
   match JSNullLiteral = pure $ "null"
   match (JSNumericLiteral n) = pure $ show n
   match (JSStringLiteral s) = pure $ string s
+  match (JSTemplateLiteral s) = pure $ "`" <> s <> "`"
   match (JSBooleanLiteral true) = pure "true"
   match (JSBooleanLiteral false) = pure "false"
   match (JSArrayLiteral xs) = joinWith "" <$> sequence

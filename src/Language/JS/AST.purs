@@ -178,6 +178,9 @@ data JS
   --
   | JSStringLiteral String
   -- |
+  -- A template literal
+  | JSTemplateLiteral String
+  -- |
   -- A boolean literal
   --
   | JSBooleanLiteral Boolean
@@ -278,6 +281,7 @@ instance showJS :: Show JS where
   show (JSNullLiteral) = "JSNullLiteral"
   show (JSNumericLiteral n) = "JSNumericLiteral (" <> show n <> ")"
   show (JSStringLiteral s) = "JSStringLiteral (" <> show s <> ")"
+  show (JSTemplateLiteral s) = "JSTemplateLiteral (" <> show s <> ")"
   show (JSBooleanLiteral b) = "JSBooleanLiteral (" <> show b <> ")"
   show (JSUnary op js) = "JSUnary (" <> show op <> ") (" <> show js <> ")"
   show (JSBinary op js1 js2) = "JSBinary (" <> show op <> ") (" <> show js1 <> ") (" <> show js2 <> ")"
@@ -307,6 +311,7 @@ instance eqJS :: Eq JS where
   eq JSNullLiteral JSNullLiteral = true
   eq (JSNumericLiteral n1) (JSNumericLiteral n2) = n1 == n2
   eq (JSStringLiteral s1) (JSStringLiteral s2) = s1 == s2
+  eq (JSTemplateLiteral s1) (JSTemplateLiteral s2) = s1 == s2
   eq (JSBooleanLiteral b1) (JSBooleanLiteral b2) = b1 == b2
   eq (JSUnary op1 js1) (JSUnary op2 js2) = op1 == op2 && js1 == js2
   eq (JSBinary op1 js11 js21) (JSBinary op2 js12 js22) = op1 == op2 && js11 == js12 && js21 == js22
