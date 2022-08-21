@@ -138,7 +138,11 @@ literals = defer $ \_ → mkPattern' match
   match (JSObjectLiteral ps) = joinWith "" <$> sequence
     [ pure "{\n"
     , withIndent $ do
-        jss ← for ps $ \(Tuple key value) → (<$>) (\s → (objectPropertyToString key <> ": ") <> s) <<< print' $ value
+        jss ← for ps $ \(Tuple key value) → joinWith "" <$> sequence
+          [ objectPropertyToString key
+          , pure ": "
+          , print' value
+          ]
         indentString ← currentIndent
         pure $ joinWith ",\n" $ map (\s → indentString <> s) jss
     , pure "\n"
@@ -146,9 +150,14 @@ literals = defer $ \_ → mkPattern' match
     , pure "}"
     ]
     where
-    objectPropertyToString ∷ String → String
-    objectPropertyToString s | isIdent s = s
-    objectPropertyToString s = show s
+    objectPropertyToString ∷ JS → PatternM String
+    objectPropertyToString (JSStringLiteral s) | isIdent s = pure s
+    objectPropertyToString (JSStringLiteral s) = pure $ show s
+    objectPropertyToString js = joinWith "" <$> sequence
+      [ pure "["
+      , print' js
+      , pure "]"
+      ]
   match (JSBlock sts) = joinWith "" <$> sequence
     [ pure "{\n"
     , withIndent $ prettyStatements sts

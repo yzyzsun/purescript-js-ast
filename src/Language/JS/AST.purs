@@ -2,9 +2,10 @@ module Language.JS.AST where
 
 import Prelude
 
+import Data.Bifunctor (bimap)
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple, snd)
+import Data.Tuple (Tuple(..))
 
 -- |
 -- Built-in unary operators
@@ -203,7 +204,7 @@ data JS
   -- |
   -- An object literal
   --
-  | JSObjectLiteral (Array (Tuple String JS))
+  | JSObjectLiteral (Array (Tuple JS JS))
   -- |
   -- An object property accessor expression
   --
@@ -350,7 +351,7 @@ everywhereOnJS f = go
   go (JSBinary op j1 j2) = f (JSBinary op (go j1) (go j2))
   go (JSArrayLiteral js) = f (JSArrayLiteral (map go js))
   go (JSIndexer j1 j2) = f (JSIndexer (go j1) (go j2))
-  go (JSObjectLiteral js) = f (JSObjectLiteral (map ((<$>) go) js))
+  go (JSObjectLiteral js) = f (JSObjectLiteral (map (bimap go go) js))
   go (JSAccessor prop j) = f (JSAccessor prop (go j))
   go (JSFunction name args j) = f (JSFunction name args (go j))
   go (JSApp j js) = f (JSApp (go j) (map go js))
@@ -376,7 +377,7 @@ everywhereOnJSTopDown f = go <<< f
   go (JSBinary op j1 j2) = JSBinary op (go (f j1)) (go (f j2))
   go (JSArrayLiteral js) = JSArrayLiteral (map (go <<< f) js)
   go (JSIndexer j1 j2) = JSIndexer (go (f j1)) (go (f j2))
-  go (JSObjectLiteral js) = JSObjectLiteral (map ((<$>) (go <<< f)) js)
+  go (JSObjectLiteral js) = JSObjectLiteral (map (bimap (go <<< f) (go <<< f)) js)
   go (JSAccessor prop j) = JSAccessor prop (go (f j))
   go (JSFunction name args j) = JSFunction name args (go (f j))
   go (JSApp j js) = JSApp (go (f j)) (map (go <<< f) js)
@@ -401,7 +402,7 @@ everythingOnJS f = go
   go j@(JSBinary _ j1 j2) = f j <> go j1 <> go j2
   go j@(JSArrayLiteral js) = foldl (<>) (f j) (map go js)
   go j@(JSIndexer j1 j2) = f j <> go j1 <> go j2
-  go j@(JSObjectLiteral js) = foldl (<>) (f j) (map (go <<< snd) js)
+  go j@(JSObjectLiteral js) = foldl (<>) (f j) (map (\(Tuple j1 j2) -> go j1 <> go j2) js)
   go j@(JSAccessor _ j1) = f j <> go j1
   go j@(JSFunction _ _ j1) = f j <> go j1
   go j@(JSApp j1 js) = foldl (<>) (f j <> go j1) (map go js)

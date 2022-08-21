@@ -14,15 +14,15 @@ suite ∷ TestSuite
 suite = Test.suite "Language.JS.AST.Pretty" $ do
   let
     obj = JSObjectLiteral
-      [ Tuple "string" $ JSStringLiteral "value"
-      , Tuple "number" $ JSNumericLiteral 8.0
-      , Tuple "boolean" $ JSBooleanLiteral true
+      [ Tuple (JSStringLiteral "string") (JSStringLiteral "value")
+      , Tuple (JSStringLiteral "my-number") (JSNumericLiteral 8.0)
+      , Tuple (JSVar "variable") (JSBooleanLiteral true)
       ]
     s = joinWith "\n"
       [ "{"
       , "    string: \"value\","
-      , "    number: 8.0,"
-      , "    boolean: true"
+      , "    \"my-number\": 8.0,"
+      , "    [variable]: true"
       , "}"
       ]
   test "plain" do
