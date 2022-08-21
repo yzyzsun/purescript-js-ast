@@ -101,6 +101,7 @@ print' js = runPattern matchValue js
     , singleton $ unary BitwiseNot "~"
     , singleton $ unary Negate "-"
     , singleton $ unary Positive "+"
+    , singleton $ unary Spread "..."
     , singleton $ binary Multiply "*"
     , singleton $ binary Divide "/"
     , singleton $ binary Modulus "%"

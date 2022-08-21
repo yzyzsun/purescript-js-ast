@@ -27,18 +27,24 @@ data UnaryOperator
   -- Numeric unary \'plus\'
   --
   | Positive
+  -- |
+  -- Spread syntax
+  --
+  | Spread
 
 instance showUnaryOperator :: Show UnaryOperator where
   show Negate = "Negate"
   show Not = "Not"
   show BitwiseNot = "BitwiseNot"
   show Positive = "Positive"
+  show Spread = "Spread"
 
 instance eqUnaryOperator :: Eq UnaryOperator where
   eq Negate Negate = true
   eq Not Not = true
   eq BitwiseNot BitwiseNot = true
   eq Positive Positive = true
+  eq Spread Spread = true
   eq _ _ = false
 
 -- |
