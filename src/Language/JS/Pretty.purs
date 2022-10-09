@@ -197,6 +197,12 @@ literals = defer $ \_ → mkPattern' match
     , pure ") "
     , print' sts
     ]
+  match (JSForOf ident obj sts) = joinWith "" <$> sequence
+    [ pure $ "for (var " <> ident <> " of "
+    , print' obj
+    , pure ") "
+    , print' sts
+    ]
   match (JSIfElse cond thens elses) = joinWith "" <$> sequence
     [ pure "if ("
     , print' cond

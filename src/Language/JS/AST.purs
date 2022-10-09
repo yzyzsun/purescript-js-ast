@@ -256,6 +256,10 @@ data JS
   --
   | JSForIn String JS JS
   -- |
+  -- ForOf loop
+  --
+  | JSForOf String JS JS
+  -- |
   -- If-then-else statement
   --
   | JSIfElse JS JS (Maybe JS)
@@ -306,6 +310,7 @@ instance showJS :: Show JS where
   show (JSWhile js1 js2) = "JSWhile (" <> show js1 <> ") (" <> show js2 <> ")"
   show (JSFor nm js1 js2 js3) = "JSFor (" <> show nm <> ") (" <> show js1 <> ") (" <> show js2 <> ") (" <> show js3 <> ")"
   show (JSForIn nm js1 js2) = "JSForIn String (" <> show nm <> ") (" <> show js1 <> ") (" <> show js2 <> ")"
+  show (JSForOf nm js1 js2) = "JSForOf String (" <> show nm <> ") (" <> show js1 <> ") (" <> show js2 <> ")"
   show (JSIfElse js1 js2 js3) = "JSIfElse (" <> show js1 <> ") (" <> show js2 <> ") (" <> show js3 <> ")"
   show (JSReturn js) = "JSReturn (" <> show js <> ")"
   show (JSThrow js) = "JSThrow (" <> show js <> ")"
@@ -336,6 +341,7 @@ instance eqJS :: Eq JS where
   eq (JSWhile js11 js21) (JSWhile js12 js22) = js11 == js12 && js21 == js22
   eq (JSFor nm1 js11 js21 js31) (JSFor nm2 js12 js22 js32) = nm1 == nm2 && js11 == js12 && js21 == js22 && js31 == js32
   eq (JSForIn nm1 js11 js21) (JSForIn nm2 js12 js22) = nm1 == nm2 && js11 == js12 && js21 == js22
+  eq (JSForOf nm1 js11 js21) (JSForOf nm2 js12 js22) = nm1 == nm2 && js11 == js12 && js21 == js22
   eq (JSIfElse js11 js21 js31) (JSIfElse js12 js22 js32) = js11 == js12 && js21 == js22 && js31 == js32
   eq (JSReturn js1) (JSReturn js2) = js1 == js2
   eq (JSThrow js1) (JSThrow js2) = js1 == js2
@@ -368,6 +374,7 @@ everywhereOnJS f = go
   go (JSWhile j1 j2) = f (JSWhile (go j1) (go j2))
   go (JSFor name j1 j2 j3) = f (JSFor name (go j1) (go j2) (go j3))
   go (JSForIn name j1 j2) = f (JSForIn name (go j1) (go j2))
+  go (JSForOf name j1 j2) = f (JSForOf name (go j1) (go j2))
   go (JSIfElse j1 j2 j3) = f (JSIfElse (go j1) (go j2) ((<$>) go j3))
   go (JSReturn js) = f (JSReturn (go js))
   go (JSThrow js) = f (JSThrow (go js))
@@ -394,6 +401,7 @@ everywhereOnJSTopDown f = go <<< f
   go (JSWhile j1 j2) = JSWhile (go (f j1)) (go (f j2))
   go (JSFor name j1 j2 j3) = JSFor name (go (f j1)) (go (f j2)) (go (f j3))
   go (JSForIn name j1 j2) = JSForIn name (go (f j1)) (go (f j2))
+  go (JSForOf name j1 j2) = JSForOf name (go (f j1)) (go (f j2))
   go (JSIfElse j1 j2 j3) = JSIfElse (go (f j1)) (go (f j2)) ((go <<< f) <$> j3)
   go (JSReturn j) = JSReturn (go (f j))
   go (JSThrow j) = JSThrow (go (f j))
@@ -419,6 +427,7 @@ everythingOnJS f = go
   go j@(JSWhile j1 j2) = f j <> go j1 <> go j2
   go j@(JSFor _ j1 j2 j3) = f j <> go j1 <> go j2 <> go j3
   go j@(JSForIn _ j1 j2) = f j <> go j1 <> go j2
+  go j@(JSForOf _ j1 j2) = f j <> go j1 <> go j2
   go j@(JSIfElse j1 j2 Nothing) = f j <> go j1 <> go j2
   go j@(JSIfElse j1 j2 (Just j3)) = f j <> go j1 <> go j2 <> go j3
   go j@(JSReturn j1) = f j <> go j1
