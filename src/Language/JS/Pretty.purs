@@ -24,7 +24,7 @@ import Data.NonEmpty (singleton)
 import Data.String (joinWith)
 import Data.Traversable (for, sequence, traverse)
 import Data.Tuple (Tuple(..))
-import Language.JS.AST (BinaryOperator(..), JS(..), UnaryOperator(..))
+import Language.JS.AST (BinaryOperator(..), JS(..), ObjectProperty(..), UnaryOperator(..))
 import Language.JS.AST.Utils (isIdent)
 import Partial.Unsafe (unsafePartial)
 import Text.Pretty.PatternArrows (Operator(..), OperatorTable(..), assocR, buildPrettyPrinter, mkPattern, mkPattern', runPattern, wrap)
@@ -139,11 +139,7 @@ literals = defer $ \_ → mkPattern' match
   match (JSObjectLiteral ps) = joinWith "" <$> sequence
     [ pure "{\n"
     , withIndent $ do
-        jss ← for ps $ \(Tuple key value) → joinWith "" <$> sequence
-          [ objectPropertyToString key
-          , pure ": "
-          , print' value
-          ]
+        jss ← traverse objectPropertyToString ps
         indentString ← currentIndent
         pure $ joinWith ",\n" $ map (\s → indentString <> s) jss
     , pure "\n"
@@ -151,14 +147,17 @@ literals = defer $ \_ → mkPattern' match
     , pure "}"
     ]
     where
-    objectPropertyToString ∷ JS → PatternM String
-    objectPropertyToString (JSStringLiteral s) | isIdent s = pure s
-    objectPropertyToString (JSStringLiteral s) = pure $ show s
-    objectPropertyToString js = joinWith "" <$> sequence
-      [ pure "["
-      , print' js
-      , pure "]"
-      ]
+    objectPropertyToString ∷ ObjectProperty → PatternM String
+    objectPropertyToString (LiteralName name js) = joinWith "" <$> sequence
+      [ pure $ wrap name <> ": ", print' js ]
+    objectPropertyToString (ComputedName js1 js2) = joinWith "" <$> sequence
+      [ pure "[", print' js1, pure "]: ", print' js2 ]
+    objectPropertyToString (Getter name js) = joinWith "" <$> sequence
+      [ pure $ "get " <> wrap name <> "() ", print' (JSBlock js) ]
+    objectPropertyToString (Setter name val js) = joinWith "" <$> sequence
+      [ pure $ "set " <> wrap name <> "(" <> val <> ") ", print' (JSBlock js) ]
+    wrap :: String -> String
+    wrap s = if isIdent s then s else show s
   match (JSBlock sts) = joinWith "" <$> sequence
     [ pure "{\n"
     , withIndent $ prettyStatements sts

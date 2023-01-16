@@ -2,10 +2,8 @@ module Language.JS.AST where
 
 import Prelude
 
-import Data.Bifunctor (bimap)
-import Data.Foldable (foldl)
+import Data.Foldable (foldMap, foldl)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
 
 -- |
 -- Built-in unary operators
@@ -172,6 +170,28 @@ instance eqBinaryOperator :: Eq BinaryOperator where
   eq _ _ = false
 
 -- |
+-- Properties in an object literal
+--
+data ObjectProperty
+  = LiteralName String JS
+  | ComputedName JS JS
+  | Getter String (Array JS)
+  | Setter String String (Array JS)
+
+instance showObjectProperty :: Show ObjectProperty where
+  show (LiteralName nm js) = "LiteralName (" <> show nm <> ") (" <> show js <> ")"
+  show (ComputedName js1 js2) = "ComputedName (" <> show js1 <> ") (" <> show js2 <> ")"
+  show (Getter nm js) = "Getter (" <> show nm <> ") (" <> show js <> ")"
+  show (Setter nm val js) = "Setter (" <> show nm <> ") (" <> show val <> ") (" <> show js <> ")"
+
+instance eqObjectProperty :: Eq ObjectProperty where
+  eq (LiteralName nm1 js1) (LiteralName nm2 js2) = nm1 == nm2 && js1 == js2
+  eq (ComputedName js11 js21) (ComputedName js12 js22) = js11 == js12 && js21 == js22
+  eq (Getter nm1 js1) (Getter nm2 js2) = nm1 == nm2 && js1 == js2
+  eq (Setter nm1 val1 js1) (Setter nm2 val2 js2) = nm1 == nm2 && val1 == val2 && js1 == js2
+  eq _ _ = false
+
+-- |
 -- Data type for simplified Javascript expressions
 --
 data JS
@@ -210,7 +230,7 @@ data JS
   -- |
   -- An object literal
   --
-  | JSObjectLiteral (Array (Tuple JS JS))
+  | JSObjectLiteral (Array ObjectProperty)
   -- |
   -- An object property accessor expression
   --
@@ -363,7 +383,13 @@ everywhereOnJS f = go
   go (JSBinary op j1 j2) = f (JSBinary op (go j1) (go j2))
   go (JSArrayLiteral js) = f (JSArrayLiteral (map go js))
   go (JSIndexer j1 j2) = f (JSIndexer (go j1) (go j2))
-  go (JSObjectLiteral js) = f (JSObjectLiteral (map (bimap go go) js))
+  go (JSObjectLiteral js) = f (JSObjectLiteral (map go' js))
+    where
+    go' :: ObjectProperty -> ObjectProperty
+    go' (LiteralName name j0) = LiteralName name (go j0)
+    go' (ComputedName j1 j2) = ComputedName (go j1) (go j2)
+    go' (Getter name j0) = Getter name (map go j0)
+    go' (Setter name val j0) = Setter name val (map go j0)
   go (JSAccessor prop j) = f (JSAccessor prop (go j))
   go (JSFunction name args j) = f (JSFunction name args (go j))
   go (JSApp j js) = f (JSApp (go j) (map go js))
@@ -390,7 +416,13 @@ everywhereOnJSTopDown f = go <<< f
   go (JSBinary op j1 j2) = JSBinary op (go (f j1)) (go (f j2))
   go (JSArrayLiteral js) = JSArrayLiteral (map (go <<< f) js)
   go (JSIndexer j1 j2) = JSIndexer (go (f j1)) (go (f j2))
-  go (JSObjectLiteral js) = JSObjectLiteral (map (bimap (go <<< f) (go <<< f)) js)
+  go (JSObjectLiteral js) = JSObjectLiteral (map go' js)
+    where
+    go' :: ObjectProperty -> ObjectProperty
+    go' (LiteralName name j0) = LiteralName name (go (f j0))
+    go' (ComputedName j1 j2) = ComputedName (go (f j1)) (go (f j2))
+    go' (Getter name j0) = Getter name (map (go <<< f) j0)
+    go' (Setter name val j0) = Setter name val (map (go <<< f) j0)
   go (JSAccessor prop j) = JSAccessor prop (go (f j))
   go (JSFunction name args j) = JSFunction name args (go (f j))
   go (JSApp j js) = JSApp (go (f j)) (map (go <<< f) js)
@@ -416,7 +448,13 @@ everythingOnJS f = go
   go j@(JSBinary _ j1 j2) = f j <> go j1 <> go j2
   go j@(JSArrayLiteral js) = foldl (<>) (f j) (map go js)
   go j@(JSIndexer j1 j2) = f j <> go j1 <> go j2
-  go j@(JSObjectLiteral js) = foldl (<>) (f j) (map (\(Tuple j1 j2) -> go j1 <> go j2) js)
+  go j@(JSObjectLiteral js) = foldl (<>) (f j) (map go' js)
+    where
+    go' :: ObjectProperty -> r
+    go' (LiteralName _ j0) = go j0
+    go' (ComputedName j1 j2) = go j1 <> go j2
+    go' (Getter _ j0) = foldMap go j0
+    go' (Setter _ _ j0) = foldMap go j0
   go j@(JSAccessor _ j1) = f j <> go j1
   go j@(JSFunction _ _ j1) = f j <> go j1
   go j@(JSApp j1 js) = foldl (<>) (f j <> go j1) (map go js)

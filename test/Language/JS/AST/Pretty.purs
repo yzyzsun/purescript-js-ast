@@ -3,8 +3,7 @@ module Test.Language.JS.AST.Pretty where
 import Prelude
 
 import Data.String (joinWith)
-import Data.Tuple (Tuple(..))
-import Language.JS.AST (JS(..))
+import Language.JS.AST (JS(..), ObjectProperty(..))
 import Language.JS.Pretty (print1)
 import Test.Unit (TestSuite, test)
 import Test.Unit (suite) as Test
@@ -14,15 +13,23 @@ suite ∷ TestSuite
 suite = Test.suite "Language.JS.AST.Pretty" $ do
   let
     obj = JSObjectLiteral
-      [ Tuple (JSStringLiteral "string") (JSStringLiteral "value")
-      , Tuple (JSStringLiteral "my-number") (JSNumericLiteral 8.0)
-      , Tuple (JSVar "variable") (JSBooleanLiteral true)
+      [ LiteralName "string" (JSStringLiteral "value")
+      , LiteralName "my-number" (JSNumericLiteral 8.0)
+      , ComputedName (JSVar "variable") (JSBooleanLiteral true)
+      , Getter "zero" [JSReturn (JSNumericLiteral 0.0)]
+      , Setter "noop" "_" []
       ]
     s = joinWith "\n"
       [ "{"
       , "    string: \"value\","
       , "    \"my-number\": 8.0,"
-      , "    [variable]: true"
+      , "    [variable]: true,"
+      , "    get zero() {"
+      , "        return 0.0;"
+      , "    },"
+      , "    set noop(_) {"
+      , ""
+      , "    }"
       , "}"
       ]
   test "plain" do
