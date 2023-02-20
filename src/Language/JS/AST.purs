@@ -307,6 +307,14 @@ data JS
   -- Continue statement
   --
   | JSContinue String
+  -- |
+  -- Export statement
+  --
+  | JSExport JS
+  -- |
+  -- Import statement
+  --
+  | JSImport String String
 
 instance showJS :: Show JS where
   show (JSNullLiteral) = "JSNullLiteral"
@@ -338,6 +346,8 @@ instance showJS :: Show JS where
   show (JSLabel lbl js) = "JSLabel (" <> show lbl <> ") (" <> show js <> ")"
   show (JSBreak lbl) = "JSBreak (" <> show lbl <> ")"
   show (JSContinue lbl) = "JSContinue (" <> show lbl <> ")"
+  show (JSExport js) = "JSExport (" <> show js <> ")"
+  show (JSImport nm f) = "JSImport (" <> show nm <> ") (" <> show f <> ")"
 
 instance eqJS :: Eq JS where
   eq JSNullLiteral JSNullLiteral = true
@@ -369,6 +379,8 @@ instance eqJS :: Eq JS where
   eq (JSLabel lbl1 js1) (JSLabel lbl2 js2) = lbl1 == lbl2 && js1 == js2
   eq (JSBreak lbl1) (JSBreak lbl2) = lbl1 == lbl2
   eq (JSContinue lbl1) (JSContinue lbl2) = lbl1 == lbl2
+  eq (JSExport js1) (JSExport js2) = js1 == js2
+  eq (JSImport nm1 f1) (JSImport nm2 f2) = nm1 == nm2 && f1 == f2
   eq _ _ = false
 
 --
@@ -406,6 +418,7 @@ everywhereOnJS f = go
   go (JSThrow js) = f (JSThrow (go js))
   go (JSTypeOf js) = f (JSTypeOf (go js))
   go (JSLabel name js) = f (JSLabel name (go js))
+  go (JSExport js) = f (JSExport (go js))
   go other = f other
 
 everywhereOnJSTopDown :: (JS -> JS) -> JS -> JS
@@ -439,6 +452,7 @@ everywhereOnJSTopDown f = go <<< f
   go (JSThrow j) = JSThrow (go (f j))
   go (JSTypeOf j) = JSTypeOf (go (f j))
   go (JSLabel name j) = JSLabel name (go (f j))
+  go (JSExport j) = JSExport (go (f j))
   go other = f other
 
 everythingOnJS :: forall r. Monoid r ⇒ (JS -> r) -> JS -> r
@@ -472,4 +486,5 @@ everythingOnJS f = go
   go j@(JSThrow j1) = f j <> go j1
   go j@(JSTypeOf j1) = f j <> go j1
   go j@(JSLabel _ j1) = f j <> go j1
+  go j@(JSExport j1) = f j <> go j1
   go other = f other

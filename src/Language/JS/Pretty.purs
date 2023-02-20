@@ -223,6 +223,12 @@ literals = defer $ \_ → mkPattern' match
     [ pure $ lbl <> ": "
     , print' js
     ]
+  match (JSExport js) = joinWith "" <$> sequence
+    [ pure "export "
+    , print' js
+    ]
+  match (JSImport name file) =
+    pure $ "import * as " <> name <> " from " <> show file
   match _ = lift Nothing
 
 conditional ∷ Pattern (Tuple (Tuple JS JS) JS)
