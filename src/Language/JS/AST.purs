@@ -315,6 +315,10 @@ data JS
   -- Import statement
   --
   | JSImport String String
+  -- |
+  -- Raw JavaScript code
+  --
+  | JSRawCode String
 
 instance showJS :: Show JS where
   show (JSNullLiteral) = "JSNullLiteral"
@@ -348,6 +352,7 @@ instance showJS :: Show JS where
   show (JSContinue lbl) = "JSContinue (" <> show lbl <> ")"
   show (JSExport js) = "JSExport (" <> show js <> ")"
   show (JSImport nm f) = "JSImport (" <> show nm <> ") (" <> show f <> ")"
+  show (JSRawCode code) = "JSRawCode (" <> show code <> ")"
 
 instance eqJS :: Eq JS where
   eq JSNullLiteral JSNullLiteral = true
@@ -381,6 +386,7 @@ instance eqJS :: Eq JS where
   eq (JSContinue lbl1) (JSContinue lbl2) = lbl1 == lbl2
   eq (JSExport js1) (JSExport js2) = js1 == js2
   eq (JSImport nm1 f1) (JSImport nm2 f2) = nm1 == nm2 && f1 == f2
+  eq (JSRawCode code1) (JSRawCode code2) = code1 == code2
   eq _ _ = false
 
 --

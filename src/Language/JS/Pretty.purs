@@ -229,6 +229,7 @@ literals = defer $ \_ → mkPattern' match
     ]
   match (JSImport name file) =
     pure $ "import * as " <> name <> " from " <> show file
+  match (JSRawCode code) = pure code
   match _ = lift Nothing
 
 conditional ∷ Pattern (Tuple (Tuple JS JS) JS)
