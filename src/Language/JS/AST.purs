@@ -260,6 +260,12 @@ data JS
   --
   | JSVariableIntroduction String (Maybe JS)
   -- |
+  -- A variable introduction in ES6+
+  | JSLet String JS
+  -- |
+  -- A constant introduction in ES6+
+  | JSConst String JS
+  -- |
   -- A variable assignment
   --
   | JSAssignment JS JS
@@ -338,6 +344,8 @@ instance showJS :: Show JS where
   show (JSConditional js1 js2 js3) = "JSConditional (" <> show js1 <> ") (" <> show js2 <> ") (" <> show js3 <> ")"
   show (JSBlock js) = "JSBlock (" <> show js <> ")"
   show (JSVariableIntroduction nm js) = "JSVariableIntroduction (" <> show nm <> ") (" <> show js <> ")"
+  show (JSLet nm js) = "JSLet (" <> show nm <> ") (" <> show js <> ")"
+  show (JSConst nm js) = "JSConst (" <> show nm <> ") (" <> show js <> ")"
   show (JSAssignment js1 js2) = "JSAssignment (" <> show js1 <> ") (" <> show js2 <> ")"
   show (JSWhile js1 js2) = "JSWhile (" <> show js1 <> ") (" <> show js2 <> ")"
   show (JSFor nm js1 js2 js3) = "JSFor (" <> show nm <> ") (" <> show js1 <> ") (" <> show js2 <> ") (" <> show js3 <> ")"
@@ -372,6 +380,8 @@ instance eqJS :: Eq JS where
   eq (JSConditional js11 js21 js31) (JSConditional js12 js22 js32) = js11 == js12 && js21 == js22 && js31 == js32
   eq (JSBlock js1) (JSBlock js2) = js1 == js2
   eq (JSVariableIntroduction nm1 js1) (JSVariableIntroduction nm2 js2) = nm1 == nm2 && js1 == js2
+  eq (JSLet nm1 js1) (JSLet nm2 js2) = nm1 == nm2 && js1 == js2
+  eq (JSConst nm1 js1) (JSConst nm2 js2) = nm1 == nm2 && js1 == js2
   eq (JSAssignment js11 js21) (JSAssignment js12 js22) = js11 == js12 && js21 == js22
   eq (JSWhile js11 js21) (JSWhile js12 js22) = js11 == js12 && js21 == js22
   eq (JSFor nm1 js11 js21 js31) (JSFor nm2 js12 js22 js32) = nm1 == nm2 && js11 == js12 && js21 == js22 && js31 == js32
@@ -414,6 +424,8 @@ everywhereOnJS f = go
   go (JSConditional j1 j2 j3) = f (JSConditional (go j1) (go j2) (go j3))
   go (JSBlock js) = f (JSBlock (map go js))
   go (JSVariableIntroduction name j) = f (JSVariableIntroduction name ((<$>) go j))
+  go (JSLet name j) = f (JSLet name (go j))
+  go (JSConst name j) = f (JSConst name (go j))
   go (JSAssignment j1 j2) = f (JSAssignment (go j1) (go j2))
   go (JSWhile j1 j2) = f (JSWhile (go j1) (go j2))
   go (JSFor name j1 j2 j3) = f (JSFor name (go j1) (go j2) (go j3))
@@ -448,6 +460,8 @@ everywhereOnJSTopDown f = go <<< f
   go (JSConditional j1 j2 j3) = JSConditional (go (f j1)) (go (f j2)) (go (f j3))
   go (JSBlock js) = JSBlock (map (go <<< f) js)
   go (JSVariableIntroduction name j) = JSVariableIntroduction name ((go <<< f) <$> j)
+  go (JSLet name j) = JSLet name (go (f j))
+  go (JSConst name j) = JSConst name (go (f j))
   go (JSAssignment j1 j2) = JSAssignment (go (f j1)) (go (f j2))
   go (JSWhile j1 j2) = JSWhile (go (f j1)) (go (f j2))
   go (JSFor name j1 j2 j3) = JSFor name (go (f j1)) (go (f j2)) (go (f j3))
@@ -481,6 +495,8 @@ everythingOnJS f = go
   go j@(JSConditional j1 j2 j3) = f j <> go j1 <> go j2 <> go j3
   go j@(JSBlock js) = foldl (<>) (f j) (map go js)
   go j@(JSVariableIntroduction _ (Just j1)) = f j <> go j1
+  go j@(JSLet _ j1) = f j <> go j1
+  go j@(JSConst _ j1) = f j <> go j1
   go j@(JSAssignment j1 j2) = f j <> go j1 <> go j2
   go j@(JSWhile j1 j2) = f j <> go j1 <> go j2
   go j@(JSFor _ j1 j2 j3) = f j <> go j1 <> go j2 <> go j3

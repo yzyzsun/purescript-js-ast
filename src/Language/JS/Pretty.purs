@@ -171,6 +171,18 @@ literals = defer $ \_ → mkPattern' match
     , pure ident
     , maybe (pure "") ((<$>) (\s → " = " <> s) <<< print') value
     ]
+  match (JSLet ident value) = joinWith "" <$> sequence
+    [ pure "let "
+    , pure ident
+    , pure " = "
+    , print' value
+    ]
+  match (JSConst ident value) = joinWith "" <$> sequence
+    [ pure "const "
+    , pure ident
+    , pure " = "
+    , print' value
+    ]
   match (JSAssignment target value) = joinWith "" <$> sequence
     [ print' target
     , pure " = "
@@ -183,7 +195,7 @@ literals = defer $ \_ → mkPattern' match
     , print' sts
     ]
   match (JSFor ident start end sts) = joinWith "" <$> sequence
-    [ pure $ "for (var " <> ident <> " = "
+    [ pure $ "for (let " <> ident <> " = "
     , print' start
     , pure $ "; " <> ident <> " < "
     , print' end
@@ -191,13 +203,13 @@ literals = defer $ \_ → mkPattern' match
     , print' sts
     ]
   match (JSForIn ident obj sts) = joinWith "" <$> sequence
-    [ pure $ "for (var " <> ident <> " in "
+    [ pure $ "for (const " <> ident <> " in "
     , print' obj
     , pure ") "
     , print' sts
     ]
   match (JSForOf ident obj sts) = joinWith "" <$> sequence
-    [ pure $ "for (var " <> ident <> " of "
+    [ pure $ "for (const " <> ident <> " of "
     , print' obj
     , pure ") "
     , print' sts
