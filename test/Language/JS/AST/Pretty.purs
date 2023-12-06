@@ -14,7 +14,7 @@ suite = Test.suite "Language.JS.AST.Pretty" $ do
   let
     obj = JSObjectLiteral
       [ LiteralName "string" (JSStringLiteral "value")
-      , LiteralName "my-number" (JSNumericLiteral 8.0)
+      , LiteralName "my-number" (JSNumericLiteral 4.8)
       , ComputedName (JSVar "variable") (JSBooleanLiteral true)
       , Getter "zero" [JSReturn (JSNumericLiteral 0.0)]
       , Setter "noop" "_" []
@@ -22,10 +22,10 @@ suite = Test.suite "Language.JS.AST.Pretty" $ do
     s = joinWith "\n"
       [ "{"
       , "    string: \"value\","
-      , "    \"my-number\": 8.0,"
+      , "    \"my-number\": 4.8,"
       , "    [variable]: true,"
       , "    get zero() {"
-      , "        return 0.0;"
+      , "        return 0;"
       , "    },"
       , "    set noop(_) {"
       , ""

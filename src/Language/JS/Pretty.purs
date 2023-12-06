@@ -74,6 +74,7 @@ currentIndent = do
 
 
 foreign import string ∷ String → String
+foreign import showNumber :: Number -> String
 
 -- |
 -- Generate an indented, pretty-printed string representing a Javascript expression
@@ -125,7 +126,7 @@ literals = defer $ \_ → mkPattern' match
   where
   match ∷ JS → PatternM String
   match JSNullLiteral = pure $ "null"
-  match (JSNumericLiteral n) = pure $ show n
+  match (JSNumericLiteral n) = pure $ showNumber n
   match (JSStringLiteral s) = pure $ string s
   match (JSTemplateLiteral s) = pure $ "`" <> s <> "`"
   match (JSBooleanLiteral true) = pure "true"
